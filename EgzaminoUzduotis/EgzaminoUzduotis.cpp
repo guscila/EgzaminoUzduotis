@@ -1,20 +1,62 @@
-// EgzaminoUzduotis.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
+﻿#include <iomanip>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <map>
+#include <cctype>
 
-int main()
-{
-    std::cout << "Hello World!\n";
+//#include "funkcijos.cpp"
+
+using namespace std;
+
+bool SimbolioTestas(unsigned char simb) {
+    return isalnum(simb) || simb >= 128;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
+char ZodziuTransformacija(char raide) {
+    if (raide >= 'A' && raide <= 'Z') return (char)(raide - 'A' + 'a');
+    return raide;
+}
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+int main() {
+    string name;
+    cout << "Iveskite norimos nagrineti svetaines pavadinima: \n"; cin >> name;
+    string failas = name + ".txt";
+    ifstream df(failas);
+    if (!df) {
+        cerr << "Failas " << failas << " neegzistuoja.\n";
+        return 0;
+    }
+    map<string, int> zodziai;
+    string eil, zodis;
+    while (getline(df, eil)) {
+        for (unsigned char charas : eil) {
+            if (SimbolioTestas(charas)) {
+                char simb = (char)charas;
+                if (charas < 128) simb = ZodziuTransformacija(simb);
+                zodis.push_back(simb);
+            }
+            else {
+                if (!zodis.empty()) {
+                    zodziai[zodis]++;
+                    zodis.clear();
+                }
+            }
+        }
+        if (!zodis.empty()) {
+            zodziai[zodis]++;
+            zodis.clear();
+        }
+    }
+    ofstream rf("rezultatai.txt");
+    rf << left << setw(15) << "Zodis" << setw(15) << "Kartai" << endl;
+    for (const auto& obj : zodziai) {
+        const string& zodis = obj.first;
+        int kiekis = obj.second;
+        if (kiekis > 1) {
+            rf << zodis << " : " << kiekis << "\n";
+        }
+    }
+    cout << "Rezultatai isvesti faile 'rezultatai.txt'.\n";
+    return 0;
+}
