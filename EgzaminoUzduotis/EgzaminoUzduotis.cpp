@@ -5,8 +5,9 @@
 #include <map>
 #include <cctype>
 #include <set>
+#include <unordered_set>
+#include <sstream>
 
-//#include "funkcijos.cpp"
 
 using namespace std;
 
@@ -14,9 +15,83 @@ bool SimboliuFiltras(unsigned char simb) {
     return isalnum(simb);
 }
 
-char ZodziuTransformacija(char raide) {
+char SimbolioTransformacija(char raide) {
     if (raide >= 'A' && raide <= 'Z') return (char)(raide - 'A' + 'a');
     return raide;
+}
+
+string ZodzioTransformacija(string link) {
+    for (char& i : link) {
+        if (i >= 'A' && i <= 'Z') i = (char)(i - 'A' + 'a');
+    }
+    return link;
+}
+
+bool URLList(const string& failas, unordered_set<string>& urls) {
+    ifstream read(failas);
+    if (!read) {
+        cerr << "Failas " << failas << " neegzistuoja.\n";
+        return 0;
+    }
+    urls.clear();
+    string blokas;
+    while (read >> blokas) {
+        if (!blokas.empty() && blokas[0] == '#') {
+            string eilute;
+            getline(read, eilute);
+            continue;
+        }
+        blokas = ZodzioTransformacija(blokas);
+        urls.insert(blokas);
+    }
+    read.close();
+    return !urls.empty();
+}
+
+string LinkTvarkymas(const string& link) {
+    auto tvarkymas = [](unsigned char charas) {
+        return charas == '.' || charas == ',' || charas == ';' || charas == ':' ||
+            charas == '!' || charas == '?' || charas == ')' || charas == '(' ||
+            charas == ']' || charas == '[' || charas == '"' || charas == '\'' ||
+            charas == '<' || charas == '>';
+        };
+    int raide = 0;
+    int galas = (int)link.size() - 1;
+    while (raide <= galas && tvarkymas((unsigned char)link[raide])) raide++;
+    while (galas >= raide && tvarkymas((unsigned char)link[galas])) galas--;
+    if (raide > galas) return "";
+    return link.substr(raide, galas - raide + 1);
+}
+
+bool URLTest(const string& link, const unordered_set<string>& urls, string& galutinis) {
+    galutinis = LinkTvarkymas(link);
+    if (galutinis.empty()) return false;
+    string url = galutinis;
+    size_t start = 0;
+    if (url.rfind("http://", 0) == 0) start = 7;
+    else if (url.rfind("https://", 0) == 0) start = 8;
+    else if (url.rfind("www.", 0) == 0) start = 0;
+    else start = 0;
+    size_t end = url.find_first_of("/?#:", start);
+    string host = (end == string::npos) ? url.substr(start) : url.substr(start, end - start);
+    if (url.find("://") == string::npos && host.find('@') != string::npos) return false;
+    size_t taskas = host.rfind('.');
+    if (taskas == string::npos || taskas == host.size() - 1) return false;
+    string tld = host.substr(taskas + 1);
+    tld = ZodzioTransformacija(tld);
+    if (urls.find(tld) == urls.end()) return false;
+    return true;
+}
+
+void URLFind(const string& eil, const unordered_set<string>& urls, set<string>& links) {
+    string link;
+    stringstream ss(eil);
+    while (ss >> link) {
+        string galutinis;
+        if (URLTest(link, urls, galutinis)) {
+            links.insert(galutinis);
+        }
+    }
 }
 
 int main() {
@@ -28,17 +103,25 @@ int main() {
         cerr << "Failas " << failas << " neegzistuoja.\n";
         return 0;
     }
+    unordered_set<string> urls;
+    if (!URLList("URLList_12.18.txt", urls)) {
+        cerr << "Failas " << failas << " neegzistuoja.\n";
+        return 0;
+    }
     map<string, int> zodziai;
     map<string, set<int>> cross;
+    set<string> links;
     string eil, zodis;
     int vieta = 0;
     bool LtRaides = false;
     while (getline(df, eil)) {
         vieta++;
+        URLFind(eil, urls, links);
+        LtRaides = false;
         for (unsigned char charas : eil) {
             if (SimboliuFiltras(charas)) {
                 char simb = (char)charas;
-                if (charas < 128) simb = ZodziuTransformacija(simb);
+                simb = SimbolioTransformacija(simb);
                 zodis.push_back(simb);
                 LtRaides = false;
             }
@@ -74,11 +157,22 @@ int main() {
             rf << left << setw(20) << zodis << setw(15) << kiekis;
             const set<int>& eilute = cross[zodis];
             for (int i : eilute) {
-                rf << i << ", ";
+                rf << i << " ";
             }
             rf << endl;
         }
     }
+    rf << "URLs:\n";
+    if (links.empty()) {
+        rf << "Tekste nera URL nuorodu.\n";
+    }
+    else {
+        for (const auto& i : links) {
+            rf << i << "\n";
+        }
+    }
     cout << "Rezultatai isvesti faile 'rezultatai.txt'.\n";
+    df.close();
+    rf.close();
     return 0;
 }
