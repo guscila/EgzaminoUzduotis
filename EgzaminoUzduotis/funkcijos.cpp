@@ -115,7 +115,8 @@ void TekstoNuskaitymas(string& failas, int pasirinkimas) {    // funkcija nuskai
         df.close();
     }
     else if (pasirinkimas == 2) {   // tekste randamos visos URL nuorodos
-        if (!URLList("URLList_12.18.txt", formatai)) {
+        string sarasas = "failai\\URLList_12.18.txt";
+        if (!URLList(sarasas, formatai)) {
             cerr << "Formatu failas nerastas.\n";
             exit(0);
         }
@@ -127,7 +128,8 @@ void TekstoNuskaitymas(string& failas, int pasirinkimas) {    // funkcija nuskai
         df.close();
     }
     else {
-        if (!URLList("URLList_12.18.txt", formatai)) {
+        string sarasas = "failai\\URLList_12.18.txt";
+        if (!URLList(sarasas, formatai)) {
             cerr << "Formatu failas nerastas.\n";
             exit(0);
         }
@@ -174,7 +176,7 @@ void TekstoNuskaitymas(string& failas, int pasirinkimas) {    // funkcija nuskai
 
 void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
     if (pasirinkimas == 1) {    // žodžių tekste rezultatų išvedimas
-        ofstream rf("rezultatai.txt");
+        ofstream rf("failai\\rezultatai.txt");
         //rf << "Zodis  |  " << "Kartai  |  " << "Lokacija (eil. nr.)" << endl;
         rf << left << setw(20) << "Zodis" << setw(15) << "Kartai" << "Lokacija (eil. nr.)" << endl;
         cout << string(50, '-') << endl;
@@ -196,7 +198,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
     }
     else if (pasirinkimas == 2) {   // URL nuorodų tekste rezultatų išvedimas
         if (isvedimas == 1) {   // išvedimas į failą
-            ofstream rf("rezultatai.txt");
+            ofstream rf("failai\\rezultatai.txt");
             rf << "URLs:\n";
             rf << string(50, '-') << endl;
             if (URLs.empty()) {
@@ -225,7 +227,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
         }
     }
     else {  // teksto žodžių ir URL nuorodų rezultatų išvedimas
-        ofstream rf("rezultatai.txt");
+        ofstream rf("failai\\rezultatai.txt");
         //rf << "Zodis  |  " << "Kartai  |  " << "Lokacija (eil. nr.)" << endl;
         rf << left << setw(20) << "Zodis" << setw(15) << "Kartai" << "Lokacija (eil. nr.)" << endl;
         cout << string(50, '-') << endl;
