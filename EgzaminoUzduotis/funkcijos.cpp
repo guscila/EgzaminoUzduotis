@@ -2,15 +2,15 @@
 #include "meniu.h"
 
 //Globalūs konteineriai:
-map<string, int> zodziai;
-map<string, set<int>> cross;
-set<string> URLs;
+map<string, int> zodziai;   // tekste esančių žodžių ir kiekio konteineris
+map<string, set<int>> cross;    // tekste esančių žodžių lokacijos konteineris
+set<string> URLs;   // tekste esančių URL nuorodų konteineris
 
 MeniuAts meniu() {  // meniu funkcija
     string name;
     cout << string(50, '-') << endl;
     cout << "Iveskite norimos nagrineti svetaines/failo pavadinima: \n"; cin >> name;
-    string failas = name + ".txt";  // nuskaitomo failo pavadinimas
+    string failas = "failai\\" + name + ".txt";  // nuskaitomo failo pavadinimas
     int ivestis, isvedimas;    // naudotojo meniu ir išvedimo pasirinkimai
     cout << string(50, '-') << endl;
     cout << "1 - rasti pasikartojancius zodzius ir ju lokacijas;\n";
@@ -65,62 +65,115 @@ string TekstoTransformacija(string tekstas) {   // funkcija transformuojanti tek
     return tekstas;
 }
 
-void TekstoNuskaitymas(string& failas) {    // funkcija nuskaitanti tekstą iš failo
+void TekstoNuskaitymas(string& failas, int pasirinkimas) {    // funkcija nuskaitanti tekstą iš failo
     ifstream df(failas);
     if (!df) {
         cerr << "Failas " << failas << " neegzistuoja.\n";
         exit(0);
     }
-    unordered_set<string> formatai;
-    if (!URLList("URLList_12.18.txt", formatai)) {
-        cerr << "Failas " << failas << " neegzistuoja.\n";
-        exit(0);
-    }
-    zodziai.clear();
-    cross.clear();
-    URLs.clear();
-    string eil, zodis;
-    int vieta = 0;
-    bool LtRaides = false;
-    while (getline(df, eil)) {
-        vieta++;
-        URLFind(eil, formatai, URLs);
-        LtRaides = false;
-        for (unsigned char charas : eil) {
-            if (isalnum(charas)) {
-                char simb = (char)charas;
-                simb = SimbolioTransformacija(simb);
-                zodis.push_back(simb);
-                LtRaides = false;
-            }
-            else if (charas == 0xC4 || charas == 0xC5) {
-                zodis.push_back((char)charas);
-                LtRaides = true;
-            }
-            else if (LtRaides && (charas >= 0x80 && charas <= 0xBF)) {
-                zodis.push_back((char)charas);
-                LtRaides = false;
-            }
-            else {
-                LtRaides = false;
-                if (!zodis.empty()) {
-                    zodziai[zodis]++;
-                    cross[zodis].insert(vieta);
-                    zodis.clear();
+    zodziai.clear();    // išvalomas konteineris
+    cross.clear();      // išvalomas konteineris
+    URLs.clear();       // išvalomas konteineris
+    unordered_set<string> formatai; // galimų URL formatų konteineris
+    if (pasirinkimas == 1) {    // teskte randami visi žodžiai ir kiek kartų jie pasirodė
+        string eil, zodis;
+        int vieta = 0;
+        bool LtRaides = false;
+        while (getline(df, eil)) {  // tekstas skaitomas po eilutę
+            vieta++;    // eilutės numerio skaičiavimas
+            LtRaides = false;
+            for (unsigned char charas : eil) {  // eilutė skaitoma po simbolį
+                if (charas < 128 && isalnum(charas)) {
+                    char simb = (char)charas;
+                    simb = SimbolioTransformacija(simb); // simbolis sumažinamas/tranformuojamas
+                    zodis.push_back(simb);  // simbolis pridedamas į žodį
+                    LtRaides = false;
+                }
+                else if (charas == 0xC4 || charas == 0xC5) {    // veiksmai su lietuviškos raidės pirmu baitu
+                    zodis.push_back((char)charas);
+                    LtRaides = true;
+                }
+                else if (LtRaides && (charas >= 0x80 && charas <= 0xBF)) {  // veiksmai su lietuviškos raidės antru baitu
+                    zodis.push_back((char)charas);
+                    LtRaides = false;
+                }
+                else {  // veiksmai jei simbolis yra kas kito
+                    LtRaides = false;
+                    if (!zodis.empty()) {
+                        zodziai[zodis]++;   // žodis pridedamas į konteinerį
+                        cross[zodis].insert(vieta); // žodžiui priskiriama jo lokacija
+                        zodis.clear();
+                    }
                 }
             }
+            if (!zodis.empty()) {
+                zodziai[zodis]++;   // žodžio kiekio papildymas
+                cross[zodis].insert(vieta); // žodžio lokacijos papildymas
+                zodis.clear();
+            }
         }
-        if (!zodis.empty()) {
-            zodziai[zodis]++;
-            cross[zodis].insert(vieta);
-            zodis.clear();
-        }
+        df.close();
     }
-    df.close();
+    else if (pasirinkimas == 2) {   // tekste randamos visos URL nuorodos
+        if (!URLList("URLList_12.18.txt", formatai)) {
+            cerr << "Formatu failas nerastas.\n";
+            exit(0);
+        }
+        string eil;
+        bool LtRaides = false;
+        while (getline(df, eil)) {  // tekstas skaitomas po eilutę
+            URLFind(eil, formatai, URLs);   // funkcijos ieškančios URL nuorodų iškvietimas
+        }
+        df.close();
+    }
+    else {
+        if (!URLList("URLList_12.18.txt", formatai)) {
+            cerr << "Formatu failas nerastas.\n";
+            exit(0);
+        }
+        string eil, zodis;
+        int vieta = 0;
+        bool LtRaides = false;
+        while (getline(df, eil)) {  // tekstas skaitomas po eilutę
+            vieta++;    // eilutės numerio skaičiavimas
+            URLFind(eil, formatai, URLs);   // funkcijos ieškančios URL nuorodų iškvietimas
+            LtRaides = false;
+            for (unsigned char charas : eil) {  // eilutė skaitoma po simbolį
+                if (charas < 128 && isalnum(charas)) {
+                    char simb = (char)charas;
+                    simb = SimbolioTransformacija(simb); // simbolis sumažinamas/tranformuojamas
+                    zodis.push_back(simb);  // simbolis pridedamas į žodį
+                    LtRaides = false;
+                }
+                else if (charas == 0xC4 || charas == 0xC5) {    // veiksmai su lietuviškos raidės pirmu baitu
+                    zodis.push_back((char)charas);
+                    LtRaides = true;
+                }
+                else if (LtRaides && (charas >= 0x80 && charas <= 0xBF)) {  // veiksmai su lietuviškos raidės antru baitu
+                    zodis.push_back((char)charas);
+                    LtRaides = false;
+                }
+                else {  // veiksmai jei simbolis yra kas kito
+                    LtRaides = false;
+                    if (!zodis.empty()) {
+                        zodziai[zodis]++;   // žodis pridedamas į konteinerį
+                        cross[zodis].insert(vieta); // žodžiui priskiriama jo lokacija
+                        zodis.clear();
+                    }
+                }
+            }
+            if (!zodis.empty()) {
+                zodziai[zodis]++;   // žodžio kiekio papildymas
+                cross[zodis].insert(vieta); // žodžio lokacijos papildymas
+                zodis.clear();
+            }
+        }
+        df.close();
+    }
 }
 
 void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
-    if (pasirinkimas == 1) {
+    if (pasirinkimas == 1) {    // žodžių tekste rezultatų išvedimas
         ofstream rf("rezultatai.txt");
         //rf << "Zodis  |  " << "Kartai  |  " << "Lokacija (eil. nr.)" << endl;
         rf << left << setw(20) << "Zodis" << setw(15) << "Kartai" << "Lokacija (eil. nr.)" << endl;
@@ -128,7 +181,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
         for (const auto& obj : zodziai) {
             const string& zodis = obj.first;
             int kiekis = obj.second;
-            if (kiekis > 1) {
+            if (kiekis > 1) {   // išvedami tik žodžiai pasirodę >=2 kartus
                 //rf << zodis << "  |  " << kiekis << "  |  ";
                 rf << left << setw(20) << zodis << setw(15) << kiekis;
                 const set<int>& eilute = cross[zodis];
@@ -141,8 +194,8 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
         cout << "Rezultatai isvesti faile 'rezultatai.txt'.\n";
         rf.close();
     }
-    else if (pasirinkimas == 2) {
-        if (isvedimas == 1) {
+    else if (pasirinkimas == 2) {   // URL nuorodų tekste rezultatų išvedimas
+        if (isvedimas == 1) {   // išvedimas į failą
             ofstream rf("rezultatai.txt");
             rf << "URLs:\n";
             rf << string(50, '-') << endl;
@@ -158,7 +211,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
             cout << "Rezultatai isvesti faile 'rezultatai.txt'.\n";
             rf.close();
         }
-        else {
+        else {  // išvedimas į terminalą
             cout << "URLs:\n";
             cout << string(50, '-') << endl;
             if (URLs.empty()) {
@@ -171,7 +224,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
             }
         }
     }
-    else {
+    else {  // teksto žodžių ir URL nuorodų rezultatų išvedimas
         ofstream rf("rezultatai.txt");
         //rf << "Zodis  |  " << "Kartai  |  " << "Lokacija (eil. nr.)" << endl;
         rf << left << setw(20) << "Zodis" << setw(15) << "Kartai" << "Lokacija (eil. nr.)" << endl;
@@ -179,7 +232,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
         for (const auto& obj : zodziai) {
             const string& zodis = obj.first;
             int kiekis = obj.second;
-            if (kiekis > 1) {
+            if (kiekis > 1) {   // išvedami tik žodžiai pasirodę >=2 kartus
                 //rf << zodis << "  |  " << kiekis << "  |  ";
                 rf << left << setw(20) << zodis << setw(15) << kiekis;
                 const set<int>& eilute = cross[zodis];
@@ -213,23 +266,24 @@ bool URLList(const string& failas, unordered_set<string>& formatai) {
         cerr << "Failas " << failas << " neegzistuoja.\n";
         return 0;
     }
-    formatai.clear();
+    formatai.clear();   // išvalomas konteineris
     string blokas;
-    while (read >> blokas) {
-        if (!blokas.empty() && blokas[0] == '#') {
+    while (read >> blokas) {    // formatas nuskaitomas
+        if (!blokas.empty() && blokas[0] == '#') {  // praleidžiami komentarai ar tarpai
             string eilute;
             getline(read, eilute);
             continue;
         }
-        blokas = TekstoTransformacija(blokas);
-        formatai.insert(blokas);
+        blokas = TekstoTransformacija(blokas);  // blokas sumažinamas/transformuojamas
+        formatai.insert(blokas);    // formatas pridedamas į konteinerį
     }
     read.close();
     return !formatai.empty();
 }
 
 string LinkTvarkymas(const string& link) {
-    auto tvarkymas = [](unsigned char charas) {
+    auto tvarkymas = [](unsigned char charas) { // pašalinami simboliai
+        if (charas >= 128) return true;
         return charas == '.' || charas == ',' || charas == ';' || charas == ':' ||
             charas == '!' || charas == '?' || charas == ')' || charas == '(' ||
             charas == ']' || charas == '[' || charas == '"' || charas == '\'' ||
@@ -237,15 +291,15 @@ string LinkTvarkymas(const string& link) {
         };
     int raide = 0;
     int galas = (int)link.size() - 1;
-    while (raide <= galas && tvarkymas((unsigned char)link[raide])) raide++;
-    while (galas >= raide && tvarkymas((unsigned char)link[galas])) galas--;
+    while (raide <= galas && tvarkymas((unsigned char)link[raide])) raide++;    // tvarkymas iš priekio
+    while (galas >= raide && tvarkymas((unsigned char)link[galas])) galas--;    // tvarkymas iš galo
     if (raide > galas) return "";
-    return link.substr(raide, galas - raide + 1);
+    return link.substr(raide, galas - raide + 1); // grąžinama apkirpta dalis
 }
 
 bool URLTest(const string& link, const unordered_set<string>& links, string& galutinis) {
-    galutinis = LinkTvarkymas(link);
-    if (galutinis.empty()) return false;
+    galutinis = LinkTvarkymas(link);    // aptvarkomas/apkarpomas URL
+    if (galutinis.empty()) return false;    // ne URL
     string url = galutinis;
     size_t start = 0;
     if (url.rfind("http://", 0) == 0) start = 7;
@@ -253,24 +307,23 @@ bool URLTest(const string& link, const unordered_set<string>& links, string& gal
     else if (url.rfind("www.", 0) == 0) start = 0;
     else start = 0;
     size_t end = url.find_first_of("/?#:", start);
-    string host = (end == string::npos) ? url.substr(start) : url.substr(start, end - start);
-    if (url.find("://") == string::npos && host.find('@') != string::npos) return false;
-    size_t taskas = host.rfind('.');
+    string host = (end == string::npos) ? url.substr(start) : url.substr(start, end - start);   // host nustatymas
+    if (url.find("://") == string::npos && host.find('@') != string::npos) return false;    // el. pašto adreso atmetimas
+    size_t taskas = host.rfind('.');    // taško skirties suradimas
     if (taskas == string::npos || taskas == host.size() - 1) return false;
     string tld = host.substr(taskas + 1);
     tld = TekstoTransformacija(tld);
-    if (links.find(tld) == links.end()) return false;
+    if (links.find(tld) == links.end()) return false;   // tikrina ar URL domenas yra formatų sąraše
     return true;
 }
 
 void URLFind(const string& eil, const unordered_set<string>& links, set<string>& URLs) {
     string link;
     stringstream ss(eil);
-    while (ss >> link) {
+    while (ss >> link) {    // suskaldo tekstą į tokenus
         string galutinis;
-        if (URLTest(link, links, galutinis)) {
-            URLs.insert(galutinis);
+        if (URLTest(link, links, galutinis)) {  // tikrina ar tokenas yra URL nuoroda
+            URLs.insert(galutinis); // URL nuoroda pridedama į konteinerį
         }
     }
 }
-
