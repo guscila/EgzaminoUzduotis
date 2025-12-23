@@ -23,10 +23,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="zodziai.h">
+    <ClInclude Include="funkcijos.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="funkcijos.h">
+    <ClInclude Include="meniu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
