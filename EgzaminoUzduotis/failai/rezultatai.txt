@@ -1,15 +1,12 @@
-URLs:
+Zodis               Kartai         Lokacija (eil. nr.)
 --------------------------------------------------
-Broadway.com
-ComicBook.com
-ComicBookResources.com
-Guide.com
-Mania.com
-Marvel.com
-Painted.com
-Playbill.com
-SamRuby.com
-SpidermanBroadway.Marvel.com
-Spidermanonbroadway.marvel.com
-www.keefestudios.com
-www.msichicago.org
+du                  2              1 
+dvi                 2              3 
+gaideliai           2              1 
+maišė             2              11 
+malė               2              6 
+musė               2              11 
+ožys               2              6 
+saulė              2              13 
+virė               2              13 
+vištelės          2              3 

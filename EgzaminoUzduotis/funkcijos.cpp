@@ -179,7 +179,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
         ofstream rf("failai\\rezultatai.txt");
         //rf << "Zodis  |  " << "Kartai  |  " << "Lokacija (eil. nr.)" << endl;
         rf << left << setw(20) << "Zodis" << setw(15) << "Kartai" << "Lokacija (eil. nr.)" << endl;
-        cout << string(50, '-') << endl;
+        rf << string(50, '-') << endl;
         for (const auto& obj : zodziai) {
             const string& zodis = obj.first;
             int kiekis = obj.second;
@@ -230,7 +230,7 @@ void RezultatuIsvedimas(int& pasirinkimas, int& isvedimas) {
         ofstream rf("failai\\rezultatai.txt");
         //rf << "Zodis  |  " << "Kartai  |  " << "Lokacija (eil. nr.)" << endl;
         rf << left << setw(20) << "Zodis" << setw(15) << "Kartai" << "Lokacija (eil. nr.)" << endl;
-        cout << string(50, '-') << endl;
+        rf << string(50, '-') << endl;
         for (const auto& obj : zodziai) {
             const string& zodis = obj.first;
             int kiekis = obj.second;
